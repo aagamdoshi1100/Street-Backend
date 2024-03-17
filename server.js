@@ -12,4 +12,9 @@ app.listen(3000, () => {
 app.get("/", (req, res) => {
   res.send("Success");
 });
+
+app.use(express.json());
+const authRouter = require("./routes/user.routes");
+app.use("/", authRouter);
+
 connection();
