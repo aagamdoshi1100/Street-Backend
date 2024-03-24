@@ -10,6 +10,7 @@ productRouter.get("/", async (req, res) => {
       data: getAllProducts,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -21,6 +22,21 @@ productRouter.get("/:productId", async (req, res) => {
       data: getProductsById,
     });
   } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+productRouter.get("/search/:searchValue", async (req, res) => {
+  try {
+    const getProducts = await Product.find({
+      Name: { $regex: new RegExp(req.params.searchValue, "i") },
+    });
+    res.status(200).json({
+      data: getProducts,
+    });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -33,6 +49,7 @@ productRouter.post("/addProduct", async (req, res) => {
       data: addProductResponse,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 });
