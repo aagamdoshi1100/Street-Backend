@@ -14,9 +14,11 @@ app.get("/", (req, res) => {
 });
 
 app.use(express.json());
-const authRouter = require("./routes/user.routes");
+const authRouter = require("./routes/auth.routes");
 const productRouter = require("./routes/product.routes");
+const userRouter = require("./routes/user.routes");
 app.use("/", authRouter);
 app.use("/products", productRouter);
+app.use("/users", userRouter);
 
 connection();
