@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const { Cart } = require("../models/cart.model");
 const { Product } = require("../models/product.model");
 const { User } = require("../models/user.model");
+const { Wishlist } = require("../models/wishlist.model");
 
 const userRouter = express.Router();
 
@@ -17,10 +18,20 @@ async function populateIds(array) {
   return populatedArray;
 }
 
+const populateWishlists = async (array) => {
+  const populatedArray = await Promise.all(
+    array.map(async (obj) => {
+      const product = await Product.findById(obj._id);
+      return { ...product._doc };
+    })
+  );
+
+  return populatedArray;
+};
+
 userRouter.post("/:userId/cart", async (req, res) => {
   try {
     const { productId } = req.body;
-    console.log(productId, "pid");
     const userExists = await User.findById(req.params.userId);
     const productExists = await Product.findById(productId);
 
@@ -39,11 +50,9 @@ userRouter.post("/:userId/cart", async (req, res) => {
         cartProducts: [firstProduct],
       });
     } else {
-      console.log(cart.cartProducts, "cp");
       const findExistingProductIndex = cart.cartProducts.findIndex(
         (product) => product._id.toString() === productId.toString()
       );
-      console.log(findExistingProductIndex, "fs");
       if (findExistingProductIndex !== -1) {
         cart.cartProducts[findExistingProductIndex].qty += 1;
       } else {
@@ -118,6 +127,145 @@ userRouter.patch("/:userId/cart", async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });
+  }
+});
+
+userRouter.patch(
+  "/:userId/cart/:productId/moveToWishlist",
+  async (req, res) => {
+    try {
+      const fetchWishList = await Wishlist.findOne({
+        userId: req.params.userId,
+      });
+      const fetchCartList = await Cart.findOne({
+        userId: req.params.userId,
+      });
+      const checkIfProductAlreadyExistInWishlist =
+        fetchWishList.wishlistProducts.find(
+          (pro) => pro.toString() === req.params.productId.toString()
+        );
+      if (!checkIfProductAlreadyExistInWishlist) {
+        fetchWishList.wishlistProducts.push(
+          new mongoose.Types.ObjectId(req.params.productId.toString())
+        );
+      }
+      const removeFromCart = fetchCartList.cartProducts.filter(
+        (pro) => pro._id.toString() !== req.params.productId.toString()
+      );
+      fetchCartList.cartProducts = removeFromCart;
+      await fetchWishList.save();
+      await fetchCartList.save();
+      res.status(200).json({ message: "Product moved to wishlist" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+userRouter.post("/:userId/wishlist", async (req, res) => {
+  try {
+    const isWishListDocExist = await Wishlist.findOne({
+      userId: req.params.userId,
+    });
+    if (!isWishListDocExist) {
+      const firstWishList = {
+        userId: req.params.userId,
+        wishlistProducts: [
+          new mongoose.Types.ObjectId(req.body.productId.toString()),
+        ],
+      };
+      const createWishListDoc = await Wishlist.create(firstWishList);
+      res.status(201).json({ message: "Wishlist created" });
+    } else {
+      if (
+        isWishListDocExist.wishlistProducts.find(
+          (pro) => pro.toString() === req.body.productId.toString()
+        )
+      ) {
+        isWishListDocExist.wishlistProducts =
+          isWishListDocExist.wishlistProducts.filter(
+            (pro) => pro.toString() !== req.body.productId.toString()
+          );
+        await isWishListDocExist.save();
+        res.status(200).json({ message: "Wishlist removed" });
+      } else {
+        isWishListDocExist.wishlistProducts.push(
+          new mongoose.Types.ObjectId(req.body.productId.toString())
+        );
+        await isWishListDocExist.save();
+        res.status(200).json({ message: "Wishlist added" });
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+userRouter.get("/:userId/wishlist", async (req, res) => {
+  try {
+    const fetchWishList = await Wishlist.findOne({
+      userId: req.params.userId,
+    });
+    if (!fetchWishList) {
+      const createDoc = {
+        userId: req.params.userId,
+        wishlistProducts: [],
+      };
+      const createWishListDoc = await Wishlist.create(createDoc);
+      res.status(201).json({ message: "Wishlist created", wishlists: [] });
+    } else {
+      const wishlists = await populateWishlists(fetchWishList.wishlistProducts);
+      res.status(200).json({ wishlists });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+userRouter.patch(
+  "/:userId/wishlist/:productId/moveToCart",
+  async (req, res) => {
+    try {
+      const fetchWishList = await Wishlist.findOne({
+        userId: req.params.userId,
+      });
+      const fetchCartList = await Cart.findOne({
+        userId: req.params.userId,
+      });
+      fetchWishList.wishlistProducts = fetchWishList.wishlistProducts.filter(
+        (pro) => pro.toString() !== req.params.productId.toString()
+      );
+      fetchCartList.cartProducts.push(
+        new mongoose.Types.ObjectId(req.params.productId.toString())
+      );
+      await fetchWishList.save();
+      await fetchCartList.save();
+      res.status(200).json({ message: "Product moved to cart" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+userRouter.get("/:userId/cartAndWishlistIds", async (req, res) => {
+  try {
+    const fetchWishList = await Wishlist.findOne({
+      userId: req.params.userId,
+    });
+    const fetchCartList = await Cart.findOne({
+      userId: req.params.userId,
+    });
+    res.status(200).json({
+      cartIds: fetchCartList.cartProducts || [],
+      wishlistIds: fetchWishList.wishlistProducts || [],
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
 });
 
