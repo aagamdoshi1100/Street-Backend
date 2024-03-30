@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema(
     phone: Number,
     country: String,
     address: String,
+    mobile: Number,
   },
   {
     timestamp: true,

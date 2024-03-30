@@ -260,12 +260,31 @@ userRouter.get("/:userId/cartAndWishlistIds", async (req, res) => {
       userId: req.params.userId,
     });
     res.status(200).json({
-      cartIds: fetchCartList.cartProducts || [],
-      wishlistIds: fetchWishList.wishlistProducts || [],
+      cartIds: fetchCartList?.cartProducts || [],
+      wishlistIds: fetchWishList?.wishlistProducts || [],
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+userRouter.put("/:userId/profile", async (req, res) => {
+  try {
+    const response = await User.findByIdAndUpdate(
+      req.params.userId,
+      req.body.details,
+      { new: true }
+    );
+    const {
+      _doc: { password, ...propertiesWOPass },
+    } = response;
+    res.json({
+      message: "User details updated successfully",
+      data: propertiesWOPass,
+    });
+  } catch (err) {
+    console.error(err);
   }
 });
 
