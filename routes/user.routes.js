@@ -4,6 +4,7 @@ const { Cart } = require("../models/cart.model");
 const { Product } = require("../models/product.model");
 const { User } = require("../models/user.model");
 const { Wishlist } = require("../models/wishlist.model");
+const { Address } = require("../models/addresses.model");
 
 const userRouter = express.Router();
 
@@ -285,6 +286,46 @@ userRouter.put("/:userId/profile", async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+  }
+});
+
+userRouter.get("/:userId/addresses", async (req, res) => {
+  try {
+    const findUserAddresses = await Address.findOne({
+      userId: req.params.userId,
+    });
+    if (findUserAddresses) {
+      res.status(200).json({ addresses: findUserAddresses.addresses });
+    } else {
+      res.status(200).json({ addresses: [] });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ err: err.message });
+  }
+});
+
+userRouter.post("/:userId/addresses", async (req, res) => {
+  try {
+    let findUserAddresses = await Address.findOne({
+      userId: req.params.userId,
+    });
+    if (!findUserAddresses) {
+      findUserAddresses = new Address({
+        userId: req.params.userId,
+        Addresses: [req.body],
+      });
+    } else {
+      findUserAddresses.addresses.push(req.body);
+    }
+    const saveData = await findUserAddresses.save();
+    res.status(201).json({
+      message: "Address added successfully",
+      data: saveData.addresses[saveData.addresses.length - 1],
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ err: err.message });
   }
 });
 
