@@ -239,9 +239,17 @@ userRouter.patch(
       fetchWishList.wishlistProducts = fetchWishList.wishlistProducts.filter(
         (pro) => pro.toString() !== req.params.productId.toString()
       );
-      fetchCartList.cartProducts.push(
-        new mongoose.Types.ObjectId(req.params.productId.toString())
+      const checkIfProductAlreadyExistInCart = fetchCartList.cartProducts.find(
+        (pro) => pro._id.toString() === req.params.productId.toString()
       );
+      console.log(fetchCartList, checkIfProductAlreadyExistInCart, "ck");
+      if (checkIfProductAlreadyExistInCart) {
+        checkIfProductAlreadyExistInCart.qty += 1;
+      } else {
+        fetchCartList.cartProducts.push(
+          new mongoose.Types.ObjectId(req.params.productId.toString())
+        );
+      }
       await fetchWishList.save();
       await fetchCartList.save();
       res.status(200).json({ message: "Product moved to cart" });
