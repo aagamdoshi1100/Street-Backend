@@ -5,6 +5,7 @@ const { Product } = require("../models/product.model");
 const { User } = require("../models/user.model");
 const { Wishlist } = require("../models/wishlist.model");
 const { Address } = require("../models/addresses.model");
+const { tokenVerify } = require("../middlewares/middlewares");
 
 const userRouter = express.Router();
 
@@ -30,7 +31,7 @@ const populateWishlists = async (array) => {
   return populatedArray;
 };
 
-userRouter.post("/:userId/cart", async (req, res) => {
+userRouter.post("/:userId/cart", tokenVerify, async (req, res) => {
   try {
     const { productId } = req.body;
     const userExists = await User.findById(req.params.userId);
@@ -71,7 +72,7 @@ userRouter.post("/:userId/cart", async (req, res) => {
   }
 });
 
-userRouter.get("/:userId/cart", async (req, res) => {
+userRouter.get("/:userId/cart", tokenVerify, async (req, res) => {
   try {
     const userExists = await User.findById(req.params.userId);
     if (!userExists) {
@@ -92,7 +93,7 @@ userRouter.get("/:userId/cart", async (req, res) => {
   }
 });
 
-userRouter.patch("/:userId/cart", async (req, res) => {
+userRouter.patch("/:userId/cart", tokenVerify, async (req, res) => {
   try {
     const userExists = await User.findById(req.params.userId);
     if (!userExists) {
@@ -133,6 +134,7 @@ userRouter.patch("/:userId/cart", async (req, res) => {
 
 userRouter.patch(
   "/:userId/cart/:productId/moveToWishlist",
+  tokenVerify,
   async (req, res) => {
     try {
       const fetchWishList = await Wishlist.findOne({
@@ -164,7 +166,7 @@ userRouter.patch(
   }
 );
 
-userRouter.post("/:userId/wishlist", async (req, res) => {
+userRouter.post("/:userId/wishlist", tokenVerify, async (req, res) => {
   try {
     const isWishListDocExist = await Wishlist.findOne({
       userId: req.params.userId,
@@ -204,7 +206,7 @@ userRouter.post("/:userId/wishlist", async (req, res) => {
   }
 });
 
-userRouter.get("/:userId/wishlist", async (req, res) => {
+userRouter.get("/:userId/wishlist", tokenVerify, async (req, res) => {
   try {
     const fetchWishList = await Wishlist.findOne({
       userId: req.params.userId,
@@ -228,6 +230,7 @@ userRouter.get("/:userId/wishlist", async (req, res) => {
 
 userRouter.patch(
   "/:userId/wishlist/:productId/moveToCart",
+  tokenVerify,
   async (req, res) => {
     try {
       const fetchWishList = await Wishlist.findOne({
@@ -260,7 +263,7 @@ userRouter.patch(
   }
 );
 
-userRouter.get("/:userId/cartAndWishlistIds", async (req, res) => {
+userRouter.get("/:userId/cartAndWishlistIds", tokenVerify, async (req, res) => {
   try {
     const fetchWishList = await Wishlist.findOne({
       userId: req.params.userId,
@@ -278,7 +281,7 @@ userRouter.get("/:userId/cartAndWishlistIds", async (req, res) => {
   }
 });
 
-userRouter.put("/:userId/profile", async (req, res) => {
+userRouter.put("/:userId/profile", tokenVerify, async (req, res) => {
   try {
     const response = await User.findByIdAndUpdate(
       req.params.userId,
@@ -297,7 +300,7 @@ userRouter.put("/:userId/profile", async (req, res) => {
   }
 });
 
-userRouter.get("/:userId/addresses", async (req, res) => {
+userRouter.get("/:userId/addresses", tokenVerify, async (req, res) => {
   try {
     const findUserAddresses = await Address.findOne({
       userId: req.params.userId,
@@ -313,7 +316,7 @@ userRouter.get("/:userId/addresses", async (req, res) => {
   }
 });
 
-userRouter.post("/:userId/addresses", async (req, res) => {
+userRouter.post("/:userId/addresses", tokenVerify, async (req, res) => {
   try {
     let findUserAddresses = await Address.findOne({
       userId: req.params.userId,
