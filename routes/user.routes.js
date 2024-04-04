@@ -6,6 +6,7 @@ const { User } = require("../models/user.model");
 const { Wishlist } = require("../models/wishlist.model");
 const { Address } = require("../models/addresses.model");
 const { tokenVerify } = require("../middlewares/middlewares");
+const { Order } = require("../models/placeOrder.model");
 
 const userRouter = express.Router();
 
@@ -333,6 +334,59 @@ userRouter.post("/:userId/addresses", tokenVerify, async (req, res) => {
     res.status(201).json({
       message: "Address added successfully",
       data: saveData.addresses[saveData.addresses.length - 1],
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ err: err.message });
+  }
+});
+
+userRouter.post("/:userId/orders", tokenVerify, async (req, res) => {
+  try {
+    let findCart = await Cart.findOne({
+      userId: req.params.userId,
+    });
+    if (findCart) {
+      findCart.cartProducts = [];
+      await findCart.save();
+    }
+    let placeOrder = await Order.findOne({
+      userId: req.params.userId,
+    });
+    if (!placeOrder) {
+      placeOrder = new Order({
+        userId: req.params.userId,
+        orders: req.body.data,
+      });
+    } else {
+      placeOrder.orders = [...placeOrder.orders, ...req.body.data];
+    }
+    await placeOrder.save();
+    res.status(201).json({
+      message: "Order placed successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ err: err.message });
+  }
+});
+
+userRouter.get("/:userId/orders", tokenVerify, async (req, res) => {
+  try {
+    let fetchOrder = await Order.findOne({
+      userId: req.params.userId,
+    });
+    if (!fetchOrder) {
+      fetchOrder = new Order({
+        userId: req.params.userId,
+        orders: [],
+      });
+      await placeOrder.save();
+    }
+    const orders = await populateWishlists(fetchOrder.orders);
+    res.status(201).json({
+      message: "Order fetched successfully",
+      data: orders ?? [],
     });
   } catch (err) {
     console.error(err);
