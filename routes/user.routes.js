@@ -64,9 +64,10 @@ userRouter.post("/:userId/cart", tokenVerify, async (req, res) => {
       await cart.save();
       cart = await populateIds(cart.cartProducts);
     }
-    return res
-      .status(200)
-      .json({ message: "Product added to cart successfully", cart });
+    return res.status(200).json({
+      message: "Product added to cart successfully",
+      cart: cart ?? [],
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });
@@ -81,12 +82,13 @@ userRouter.get("/:userId/cart", tokenVerify, async (req, res) => {
     }
     let cart = await Cart.findOne({ userId: req.params.userId });
     if (!cart) {
-      res.status(404).json({ message: "No products in cart", cart: [] });
+      res.status(200).json({ message: "No products in cart", cart: [] });
     } else {
       cart = await populateIds(cart.cartProducts);
-      return res
-        .status(200)
-        .json({ message: "Cart products fetched successfully", cart });
+      return res.status(200).json({
+        message: "Cart products fetched successfully",
+        cart: cart ?? [],
+      });
     }
   } catch (err) {
     console.error(err);
@@ -381,7 +383,7 @@ userRouter.get("/:userId/orders", tokenVerify, async (req, res) => {
         userId: req.params.userId,
         orders: [],
       });
-      await placeOrder.save();
+      await fetchOrder.save();
     }
     const orders = await populateWishlists(fetchOrder.orders);
     res.status(201).json({
