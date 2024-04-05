@@ -327,7 +327,7 @@ userRouter.post("/:userId/addresses", tokenVerify, async (req, res) => {
     if (!findUserAddresses) {
       findUserAddresses = new Address({
         userId: req.params.userId,
-        Addresses: [req.body],
+        addresses: [req.body],
       });
     } else {
       findUserAddresses.addresses.push(req.body);
