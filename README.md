@@ -1,4 +1,4 @@
-## Street Ecommerce Backend
+# Street Ecommerce Backend
 This is a backend application for a Street ecommerce platform built with Node.js, MongoDB, and Mongoose. It provides a set of API endpoints for managing users, products, orders, addresses, carts, wishlists, and token-based authentication.
 
 ### Documentation
